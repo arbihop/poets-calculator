@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POETS — Peri-Operative Early Transfusion Score</title>
+<meta name="description" content="A clinical decision support tool for preoperative type-and-screen testing in primary hip, knee, and shoulder arthroplasty.">
+<meta property="og:title" content="POETS Calculator">
+<meta property="og:description" content="Peri-Operative Early Transfusion Score for primary arthroplasty.">
+<meta property="og:type" content="website">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,200..900,0..100&family=Manrope:wght@300..800&display=swap" rel="stylesheet">
+
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%231B4D4D'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='40' font-weight='600' text-anchor='middle' fill='%23FAF7F2'%3EP%3C/text%3E%3C/svg%3E">
+
+<style>
+:root {
+    --bg: #FAF7F2;
+    --bg-alt: #F2EDE3;
+    --ink: #1A1A1F;
+    --ink-light: #5A5A60;
+    --ink-fade: #8B8B91;
+    --accent: #1B4D4D;
+    --accent-light: #2E6B6B;
+    --line: #D4CDBE;
+    --line-soft: #E8E1D2;
+    --low: #557A56;
+    --low-bg: #EAEFE3;
+    --high: #B5642A;
+    --high-bg: #F4E6D7;
+    --shadow: rgba(26, 26, 31, 0.06);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: "Manrope", -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    min-height: 100vh;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+        radial-gradient(circle at 25% 15%, rgba(27, 77, 77, 0.025) 0%, transparent 40%),
+        radial-gradient(circle at 75% 85%, rgba(181, 100, 42, 0.02) 0%, transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+    position: relative;
+    z-index: 1;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 32px;
+    margin-bottom: 48px;
+    gap: 32px;
+}
+
+.header-text { flex: 1; min-width: 0; }
+
+.eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+}
+
+h1 {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 350;
+    font-size: clamp(36px, 5vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    margin-bottom: 16px;
+    font-variation-settings: "opsz" 144, "SOFT" 50;
+}
+
+h1 em {
+    font-style: italic;
+    font-weight: 250;
+    color: var(--accent);
+}
+
+.subtitle {
+    font-size: 16px;
+    color: var(--ink-light);
+    max-width: 620px;
+    line-height: 1.6;
+    font-weight: 300;
+}
+
+.lang-toggle {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px;
+    flex-shrink: 0;
+    background: var(--bg);
+}
+
+.lang-toggle button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding: 6px 14px;
+    border-radius: 999px;
+    color: var(--ink-fade);
+    transition: all 0.2s ease;
+}
+
+.lang-toggle button.active {
+    background: var(--ink);
+    color: var(--bg);
+}
+
+.lang-toggle button:hover:not(.active) { color: var(--ink); }
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 460px;
+    gap: 80px;
+    align-items: start;
+}
+
+@media (max-width: 980px) {
+    .grid { grid-template-columns: 1fr; gap: 48px; }
+    .header { flex-direction: column; gap: 20px; }
+    .container { padding: 32px 20px 60px; }
+}
+
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.field-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.field-label .name {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    font-variation-settings: "opsz" 24;
+    color: var(--ink);
+}
+
+.field-label .points {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 13px;
+    color: var(--ink-fade);
+    font-style: italic;
+    font-weight: 300;
+    flex-shrink: 0;
+}
+
+.field-hint {
+    font-size: 13px;
+    color: var(--ink-light);
+    line-height: 1.5;
+    font-weight: 300;
+}
+
+.segmented {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: var(--bg-alt);
+    border: 1px solid var(--line-soft);
+    border-radius: 12px;
+}
+
+.segmented button {
+    flex: 1;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-light);
+    padding: 11px 10px;
+    border-radius: 8px;
+    transition: all 0.18s ease;
+    letter-spacing: -0.005em;
+}
+
+.segmented button:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--ink);
+}
+
+.segmented button.active {
+    background: var(--bg);
+    color: var(--ink);
+    box-shadow: 0 1px 2px var(--shadow), 0 0 0 1px var(--line);
+    font-weight: 600;
+}
+
+.segmented .sublabel {
+    display: block;
+    font-size: 11px;
+    color: var(--ink-fade);
+    margin-top: 2px;
+    font-weight: 400;
+}
+
+.segmented button.active .sublabel { color: var(--ink-light); }
+
+.number-input {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg);
+    transition: border-color 0.2s ease;
+}
+
+.number-input:focus-within { border-color: var(--accent); }
+
+.number-input button {
+    width: 48px;
+    background: var(--bg-alt);
+    border: none;
+    cursor: pointer;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--ink-light);
+    transition: background 0.15s ease;
+    user-select: none;
+}
+
+.number-input button:hover { background: var(--line-soft); color: var(--ink); }
+.number-input button:active { background: var(--line); }
+
+.number-input input {
+    flex: 1;
+    border: none;
+    background: none;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 28px;
+    font-weight: 400;
+    text-align: center;
+    color: var(--ink);
+    padding: 12px 0;
+    outline: none;
+    font-feature-settings: "tnum";
+    -moz-appearance: textfield;
+    width: 100%;
+}
+
+.number-input input::-webkit-outer-spin-button,
+.number-input input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.number-input .unit {
+    display: flex;
+    align-items: center;
+    padding: 0 18px 0 4px;
+    color: var(--ink-fade);
+    font-size: 13px;
+    font-style: italic;
+    font-family: "Fraunces", serif;
+    border-left: 1px solid var(--line-soft);
+    background: var(--bg-alt);
+    font-weight: 300;
+}
+
+.result-panel {
+    position: sticky;
+    top: 32px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 36px 32px;
+    box-shadow: 0 1px 3px var(--shadow), 0 8px 32px -8px var(--shadow);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 980px) {
+    .result-panel { position: relative; top: 0; }
+}
+
+.result-panel.low {
+    border-color: var(--low);
+    background: linear-gradient(180deg, var(--low-bg) 0%, var(--bg) 80%);
+}
+
+.result-panel.high {
+    border-color: var(--high);
+    background: linear-gradient(180deg, var(--high-bg) 0%, var(--bg) 80%);
+}
+
+.result-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    margin-bottom: 8px;
+}
+
+.result-panel.low .result-eyebrow { color: var(--low); }
+.result-panel.high .result-eyebrow { color: var(--high); }
+
+.score-display {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.score-number {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 120px;
+    font-weight: 300;
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+    color: var(--ink);
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+    font-feature-settings: "tnum";
+    transition: color 0.4s ease;
+}
+
+.result-panel.low .score-number { color: var(--low); }
+.result-panel.high .score-number { color: var(--high); }
+
+.score-divider {
+    font-family: "Fraunces", serif;
+    font-size: 28px;
+    font-weight: 200;
+    color: var(--ink-fade);
+    line-height: 1;
+}
+
+.score-max {
+    font-family: "Fraunces", serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--ink-fade);
+    line-height: 1;
+    font-feature-settings: "tnum";
+}
+
+.verdict {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    margin-bottom: 8px;
+    font-variation-settings: "opsz" 36;
+}
+
+.verdict em {
+    font-style: italic;
+    font-weight: 300;
+}
+
+.recommendation {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink-light);
+    padding: 16px 18px;
+    background: var(--bg-alt);
+    border-radius: 10px;
+    margin-bottom: 24px;
+    border-left: 3px solid var(--accent);
+}
+
+.result-panel.low .recommendation {
+    border-left-color: var(--low);
+    background: rgba(85, 122, 86, 0.06);
+}
+
+.result-panel.high .recommendation {
+    border-left-color: var(--high);
+    background: rgba(181, 100, 42, 0.06);
+}
+
+.breakdown {
+    border-top: 1px solid var(--line-soft);
+    padding-top: 20px;
+}
+
+.breakdown-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-fade);
+    margin-bottom: 12px;
+}
+
+.breakdown ul { list-style: none; }
+
+.breakdown li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+    color: var(--ink-light);
+}
+
+.breakdown li.contributes { color: var(--ink); font-weight: 500; }
+
+.breakdown li .pts {
+    font-family: "Fraunces", serif;
+    font-feature-settings: "tnum";
+    font-style: italic;
+    color: var(--ink-fade);
+    font-weight: 400;
+}
+
+.breakdown li.contributes .pts { color: var(--accent); font-weight: 500; }
+
+.about {
+    margin-top: 80px;
+    padding-top: 48px;
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+}
+
+@media (max-width: 760px) {
+    .about { grid-template-columns: 1fr; gap: 32px; }
+}
+
+.about h2 {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 350;
+    font-size: 26px;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+    font-variation-settings: "opsz" 36;
+}
+
+.about p {
+    font-size: 14px;
+    color: var(--ink-light);
+    margin-bottom: 12px;
+    line-height: 1.65;
+}
+
+.performance-table {
+    background: var(--bg-alt);
+    border-radius: 12px;
+    padding: 4px;
+    margin-top: 16px;
+    border: 1px solid var(--line-soft);
+}
+
+.performance-table .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--line-soft);
+}
+
+.performance-table .row:last-child { border-bottom: none; }
+.performance-table .row .label { color: var(--ink-light); }
+.performance-table .row .val {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-weight: 500;
+    color: var(--ink);
+    font-feature-settings: "tnum";
+}
+
+.cite-block {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ink-light);
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 300;
+}
+
+.cite-block strong { font-weight: 500; color: var(--ink); }
+.cite-block em { font-style: italic; }
+
+.disclaimer {
+    margin-top: 32px;
+    font-size: 12px;
+    color: var(--ink-fade);
+    line-height: 1.6;
+    font-style: italic;
+    font-family: "Fraunces", serif;
+    font-weight: 300;
+    max-width: 720px;
+}
+
+footer {
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 1px solid var(--line-soft);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--ink-fade);
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+footer a {
+    color: var(--ink-light);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+footer a:hover { color: var(--accent); border-color: var(--accent); }
+
+@media print {
+    body::before { display: none; }
+    .lang-toggle, footer { display: none; }
+    .grid { display: block; }
+    .result-panel { position: relative; box-shadow: none; border: 2px solid var(--ink); margin-top: 24px; }
+}
+
+@keyframes reveal {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.field, .result-panel, .header, .about > * {
+    animation: reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.header { animation-delay: 0.05s; }
+.field:nth-child(1) { animation-delay: 0.15s; }
+.field:nth-child(2) { animation-delay: 0.20s; }
+.field:nth-child(3) { animation-delay: 0.25s; }
+.field:nth-child(4) { animation-delay: 0.30s; }
+.field:nth-child(5) { animation-delay: 0.35s; }
+.result-panel { animation-delay: 0.4s; }
+.about > *:nth-child(1) { animation-delay: 0.5s; }
+.about > *:nth-child(2) { animation-delay: 0.55s; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<header class="header">
+    <div class="header-text">
+        <div class="eyebrow" data-i18n="eyebrow">Clinical decision support</div>
+        <h1><span data-i18n="title-1">Peri-Operative</span> <em data-i18n="title-2">Early Transfusion</em> <span data-i18n="title-3">Score</span></h1>
+        <p class="subtitle" data-i18n="subtitle">A bedside tool to identify patients undergoing primary hip, knee, or shoulder arthroplasty who do not require routine preoperative type-and-screen testing.</p>
+    </div>
+    <div class="lang-toggle">
+        <button class="active" data-lang="en">EN</button>
+        <button data-lang="fr">FR</button>
+    </div>
+</header>
+
+<div class="grid">
+
+<form class="form-section" onsubmit="return false;">
+
+    <div class="field">
+        <div class="field-label">
+            <span class="name" data-i18n="age-label">Age</span>
+            <span class="points" data-i18n="age-points">+1 point if ≥75 yr</span>
+        </div>
+        <div class="number-input">
+            <button type="button" onclick="adjust('age', -1)" aria-label="decrease">−</button>
+            <input type="number" id="age" min="18" max="120" value="70" inputmode="numeric">
+            <span class="unit" data-i18n="years">years</span>
+            <button type="button" onclick="adjust('age', 1)" aria-label="increase">+</button>
+        </div>
+    </div>
+
+    <div class="field">
+        <div class="field-label">
+            <span class="name" data-i18n="asa-label">ASA physical status</span>
+            <span class="points" data-i18n="asa-points">+3 points if III or IV</span>
+        </div>
+        <div class="segmented" data-field="asa">
+            <button type="button" data-value="1" class="active">I</button>
+            <button type="button" data-value="2">II</button>
+            <button type="button" data-value="3">III</button>
+            <button type="button" data-value="4">IV</button>
+        </div>
+    </div>
+
+    <div class="field">
+        <div class="field-label">
+            <span class="name" data-i18n="proc-label">Type of arthroplasty</span>
+            <span class="points" data-i18n="proc-points">THA +4 · TSA +2 · TKA 0</span>
+        </div>
+        <div class="segmented" data-field="procedure">
+            <button type="button" data-value="tka" class="active">
+                <span data-i18n="tka">Total knee</span>
+                <span class="sublabel">TKA</span>
+            </button>
+            <button type="button" data-value="tha">
+                <span data-i18n="tha">Total hip</span>
+                <span class="sublabel">THA</span>
+            </button>
+            <button type="button" data-value="tsa">
+                <span data-i18n="tsa">Total shoulder</span>
+                <span class="sublabel">TSA</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="field">
+        <div class="field-label">
+            <span class="name" data-i18n="hb-label">Preoperative haemoglobin</span>
+            <span class="points" data-i18n="hb-points">+14 points if &lt;12 g/dL</span>
+        </div>
+        <p class="field-hint" data-i18n="hb-hint">Most recent value before surgery. The strongest single predictor of early transfusion.</p>
+        <div class="number-input">
+            <button type="button" onclick="adjust('hb', -0.1)" aria-label="decrease">−</button>
+            <input type="number" id="hb" min="4" max="20" step="0.1" value="13.5" inputmode="decimal">
+            <span class="unit">g/dL</span>
+            <button type="button" onclick="adjust('hb', 0.1)" aria-label="increase">+</button>
+        </div>
+    </div>
+
+    <div class="field">
+        <div class="field-label">
+            <span class="name" data-i18n="urgency-label">Surgical urgency</span>
+            <span class="points" data-i18n="urgency-points">+5 points if emergency</span>
+        </div>
+        <div class="segmented" data-field="urgency">
+            <button type="button" data-value="elective" class="active" data-i18n="elective">Elective / planned</button>
+            <button type="button" data-value="emergency" data-i18n="emergency">Emergency</button>
+        </div>
+    </div>
+
+</form>
+
+<aside class="result-panel" id="result">
+    <div class="result-eyebrow" id="result-eyebrow" data-i18n="poets-score">POETS</div>
+    <div class="score-display">
+        <span class="score-number" id="score">0</span>
+        <span class="score-divider">/</span>
+        <span class="score-max">27</span>
+    </div>
+    <div class="verdict" id="verdict"></div>
+    <div class="recommendation" id="recommendation"></div>
+
+    <div class="breakdown">
+        <div class="breakdown-title" data-i18n="breakdown">Score breakdown</div>
+        <ul id="breakdown-list"></ul>
+    </div>
+</aside>
+
+</div>
+
+<section class="about">
+    <div>
+        <h2 data-i18n="about-title">About POETS</h2>
+        <p data-i18n="about-1">POETS was developed from a bicentric retrospective cohort of 9,062 adults undergoing primary hip, knee, or shoulder arthroplasty.</p>
+        <p data-i18n="about-2">The score predicts early transfusion — defined as any red blood cell transfusion administered between hospital admission and discharge from the post-anaesthesia care unit (PACU). This is the only window during which preoperative type-and-screen availability is clinically decisive.</p>
+        <p data-i18n="about-3">A score below 5 identifies patients at very low risk of early transfusion in whom routine preoperative type-and-screen testing may be safely omitted. Postoperative transfusions on the ward are managed with standard biological monitoring.</p>
+    </div>
+    <div>
+        <h2 data-i18n="performance-title">Performance</h2>
+        <p data-i18n="performance-intro">Internal validation by 10-fold cross-validation on the development cohort:</p>
+        <div class="performance-table">
+            <div class="row"><span class="label">AUC</span><span class="val">0.961</span></div>
+            <div class="row"><span class="label" data-i18n="sensitivity">Sensitivity (threshold ≥5)</span><span class="val">100%</span></div>
+            <div class="row"><span class="label" data-i18n="specificity">Specificity</span><span class="val">62.7%</span></div>
+            <div class="row"><span class="label" data-i18n="ppv">Positive predictive value</span><span class="val">3.1%</span></div>
+            <div class="row"><span class="label" data-i18n="spared">Patients spared T&S</span><span class="val">~62%</span></div>
+        </div>
+
+        <h2 style="margin-top: 32px;" data-i18n="ref-title">Reference</h2>
+        <div class="cite-block" id="citation">
+            <strong>Sanchez A et al.</strong> Development of the Peri-Operative Early Transfusion Score (POETS) in primary hip, knee, and shoulder arthroplasty: a bicentric retrospective cohort study. <em>[Journal name]</em> <em>(in press)</em>.
+        </div>
+    </div>
+</section>
+
+<p class="disclaimer" data-i18n="disclaimer">This calculator is provided for research and educational purposes. It does not replace clinical judgement and should be applied within the context of local institutional protocols, particularly regarding emergency blood-supply pathways. External prospective validation is ongoing.</p>
+
+<footer>
+    <span data-i18n="footer-1">© 2026 ARBIHOP study group · For research use</span>
+    <span><a href="mailto:contact@example.org" data-i18n="footer-2">Contact</a></span>
+</footer>
+
+</div>
+
+<script>
+const state = {
+    age: 70,
+    hb: 13.5,
+    asa: 1,
+    procedure: 'tka',
+    urgency: 'elective',
+    lang: 'en'
+};
+
+const i18n = {
+    en: {
+        'eyebrow': 'Clinical decision support',
+        'title-1': 'Peri-Operative',
+        'title-2': 'Early Transfusion',
+        'title-3': 'Score',
+        'subtitle': 'A bedside tool to identify patients undergoing primary hip, knee, or shoulder arthroplasty who do not require routine preoperative type-and-screen testing.',
+        'age-label': 'Age',
+        'age-points': '+1 point if \u226575 yr',
+        'years': 'years',
+        'asa-label': 'ASA physical status',
+        'asa-points': '+3 points if III or IV',
+        'proc-label': 'Type of arthroplasty',
+        'proc-points': 'THA +4 \u00B7 TSA +2 \u00B7 TKA 0',
+        'tka': 'Total knee',
+        'tha': 'Total hip',
+        'tsa': 'Total shoulder',
+        'hb-label': 'Preoperative haemoglobin',
+        'hb-points': '+14 points if <12 g/dL',
+        'hb-hint': 'Most recent value before surgery. The strongest single predictor of early transfusion.',
+        'urgency-label': 'Surgical urgency',
+        'urgency-points': '+5 points if emergency',
+        'elective': 'Elective / planned',
+        'emergency': 'Emergency',
+        'poets-score': 'POETS',
+        'breakdown': 'Score breakdown',
+        'about-title': 'About POETS',
+        'about-1': 'POETS was developed from a bicentric retrospective cohort of 9,062 adults undergoing primary hip, knee, or shoulder arthroplasty.',
+        'about-2': 'The score predicts early transfusion \u2014 defined as any red blood cell transfusion administered between hospital admission and discharge from the post-anaesthesia care unit (PACU). This is the only window during which preoperative type-and-screen availability is clinically decisive.',
+        'about-3': 'A score below 5 identifies patients at very low risk of early transfusion in whom routine preoperative type-and-screen testing may be safely omitted. Postoperative transfusions on the ward are managed with standard biological monitoring.',
+        'performance-title': 'Performance',
+        'performance-intro': 'Internal validation by 10-fold cross-validation on the development cohort:',
+        'sensitivity': 'Sensitivity (threshold \u22655)',
+        'specificity': 'Specificity',
+        'ppv': 'Positive predictive value',
+        'spared': 'Patients spared T&S',
+        'ref-title': 'Reference',
+        'disclaimer': 'This calculator is provided for research and educational purposes. It does not replace clinical judgement and should be applied within the context of local institutional protocols, particularly regarding emergency blood-supply pathways. External prospective validation is ongoing.',
+        'footer-1': '\u00A9 2026 ARBIHOP study group \u00B7 For research use',
+        'footer-2': 'Contact',
+        'verdict-low': 'Low risk',
+        'verdict-low-em': 'of early transfusion',
+        'verdict-high': 'At risk',
+        'verdict-high-em': 'of early transfusion',
+        'reco-low': 'Routine preoperative type-and-screen testing may be safely omitted. Standard postoperative haemoglobin monitoring should be maintained, with type-and-screen ordered only if a delayed clinical indication arises.',
+        'reco-high': 'Preoperative type-and-screen testing is recommended. Anticipate possible early transfusion and ensure availability of compatible red blood cells.',
+        'b-age': 'Age \u226575 yr',
+        'b-asa': 'ASA III or IV',
+        'b-tha': 'Total hip arthroplasty',
+        'b-tsa': 'Total shoulder arthroplasty',
+        'b-tka': 'Total knee arthroplasty',
+        'b-hb': 'Hb <12 g/dL',
+        'b-emergency': 'Emergency surgery',
+    },
+    fr: {
+        'eyebrow': 'Aide \u00E0 la d\u00E9cision clinique',
+        'title-1': 'Score de',
+        'title-2': 'Transfusion Pr\u00E9coce',
+        'title-3': 'P\u00E9riop\u00E9ratoire',
+        'subtitle': 'Outil au lit du patient pour identifier les patients devant b\u00E9n\u00E9ficier d\'une arthroplastie primaire de hanche, genou ou \u00E9paule chez qui un bilan immuno-h\u00E9matologique pr\u00E9op\u00E9ratoire n\'est pas n\u00E9cessaire.',
+        'age-label': '\u00C2ge',
+        'age-points': '+1 point si \u226575 ans',
+        'years': 'ans',
+        'asa-label': 'Score ASA',
+        'asa-points': '+3 points si III ou IV',
+        'proc-label': 'Type d\'arthroplastie',
+        'proc-points': 'PTH +4 \u00B7 PTE +2 \u00B7 PTG 0',
+        'tka': 'Genou (PTG)',
+        'tha': 'Hanche (PTH)',
+        'tsa': '\u00C9paule (PTE)',
+        'hb-label': 'H\u00E9moglobine pr\u00E9op\u00E9ratoire',
+        'hb-points': '+14 points si <12 g/dL',
+        'hb-hint': 'Derni\u00E8re valeur avant la chirurgie. Le facteur pr\u00E9dictif le plus important de transfusion pr\u00E9coce.',
+        'urgency-label': 'Caract\u00E8re de la chirurgie',
+        'urgency-points': '+5 points si urgente',
+        'elective': 'Programm\u00E9e',
+        'emergency': 'Urgente',
+        'poets-score': 'POETS',
+        'breakdown': 'D\u00E9tail du score',
+        'about-title': '\u00C0 propos de POETS',
+        'about-1': 'POETS a \u00E9t\u00E9 d\u00E9velopp\u00E9 \u00E0 partir d\'une cohorte r\u00E9trospective bicentrique de 9 062 patients adultes op\u00E9r\u00E9s d\'une arthroplastie primaire de hanche, de genou ou d\'\u00E9paule.',
+        'about-2': 'Le score pr\u00E9dit la transfusion pr\u00E9coce, d\u00E9finie comme toute transfusion de concentr\u00E9s \u00E9rythrocytaires administr\u00E9e entre l\'admission et la sortie de SSPI. Il s\'agit de la seule p\u00E9riode durant laquelle la disponibilit\u00E9 pr\u00E9op\u00E9ratoire d\'un bilan immuno-h\u00E9matologique influence directement la prise en charge.',
+        'about-3': 'Un score inf\u00E9rieur \u00E0 5 identifie les patients \u00E0 tr\u00E8s faible risque de transfusion pr\u00E9coce, chez qui la prescription syst\u00E9matique d\'un bilan immuno-h\u00E9matologique pr\u00E9op\u00E9ratoire peut \u00EAtre omise sans risque. Les transfusions postop\u00E9ratoires en service sont g\u00E9r\u00E9es par la surveillance biologique standard.',
+        'performance-title': 'Performance',
+        'performance-intro': 'Validation interne par validation crois\u00E9e \u00E0 10 volets sur la cohorte de d\u00E9veloppement :',
+        'sensitivity': 'Sensibilit\u00E9 (seuil \u22655)',
+        'specificity': 'Sp\u00E9cificit\u00E9',
+        'ppv': 'Valeur pr\u00E9dictive positive',
+        'spared': 'Patients sans BIH inutile',
+        'ref-title': 'R\u00E9f\u00E9rence',
+        'disclaimer': 'Ce calculateur est fourni \u00E0 des fins de recherche et d\'enseignement. Il ne remplace pas le jugement clinique et doit \u00EAtre utilis\u00E9 dans le cadre des protocoles locaux, notamment concernant les fili\u00E8res de transfusion en urgence vitale. Une validation externe prospective est en cours.',
+        'footer-1': '\u00A9 2026 Groupe d\'\u00E9tude ARBIHOP \u00B7 Usage de recherche',
+        'footer-2': 'Contact',
+        'verdict-low': 'Risque faible',
+        'verdict-low-em': 'de transfusion pr\u00E9coce',
+        'verdict-high': 'Risque \u00E9lev\u00E9',
+        'verdict-high-em': 'de transfusion pr\u00E9coce',
+        'reco-low': 'La prescription syst\u00E9matique d\'un bilan immuno-h\u00E9matologique pr\u00E9op\u00E9ratoire peut \u00EAtre omise sans risque. La surveillance biologique postop\u00E9ratoire standard doit \u00EAtre maintenue, avec un BIH demand\u00E9 uniquement en cas d\'indication clinique diff\u00E9r\u00E9e.',
+        'reco-high': 'Un bilan immuno-h\u00E9matologique pr\u00E9op\u00E9ratoire est recommand\u00E9. Anticipez une \u00E9ventuelle transfusion pr\u00E9coce et assurez la disponibilit\u00E9 de concentr\u00E9s \u00E9rythrocytaires compatibles.',
+        'b-age': '\u00C2ge \u226575 ans',
+        'b-asa': 'ASA III ou IV',
+        'b-tha': 'Proth\u00E8se totale de hanche',
+        'b-tsa': 'Proth\u00E8se totale d\'\u00E9paule',
+        'b-tka': 'Proth\u00E8se totale de genou',
+        'b-hb': 'Hb <12 g/dL',
+        'b-emergency': 'Chirurgie urgente',
+    }
+};
+
+function calculate() {
+    const t = i18n[state.lang];
+    let total = 0;
+    const contributions = [];
+
+    if (state.age >= 75) {
+        total += 1;
+        contributions.push({ label: t['b-age'], pts: 1, contributes: true });
+    } else {
+        contributions.push({ label: t['b-age'], pts: 0, contributes: false });
+    }
+
+    if (state.asa >= 3) {
+        total += 3;
+        contributions.push({ label: t['b-asa'], pts: 3, contributes: true });
+    } else {
+        contributions.push({ label: t['b-asa'], pts: 0, contributes: false });
+    }
+
+    if (state.procedure === 'tha') {
+        total += 4;
+        contributions.push({ label: t['b-tha'], pts: 4, contributes: true });
+    } else if (state.procedure === 'tsa') {
+        total += 2;
+        contributions.push({ label: t['b-tsa'], pts: 2, contributes: true });
+    } else {
+        contributions.push({ label: t['b-tka'], pts: 0, contributes: false });
+    }
+
+    if (state.hb < 12) {
+        total += 14;
+        contributions.push({ label: t['b-hb'], pts: 14, contributes: true });
+    } else {
+        contributions.push({ label: t['b-hb'], pts: 0, contributes: false });
+    }
+
+    if (state.urgency === 'emergency') {
+        total += 5;
+        contributions.push({ label: t['b-emergency'], pts: 5, contributes: true });
+    } else {
+        contributions.push({ label: t['b-emergency'], pts: 0, contributes: false });
+    }
+
+    document.getElementById('score').textContent = total;
+
+    const panel = document.getElementById('result');
+    const verdict = document.getElementById('verdict');
+    const recommendation = document.getElementById('recommendation');
+
+    panel.classList.remove('low', 'high');
+    if (total < 5) {
+        panel.classList.add('low');
+        verdict.innerHTML = t['verdict-low'] + ' <em>' + t['verdict-low-em'] + '</em>';
+        recommendation.textContent = t['reco-low'];
+    } else {
+        panel.classList.add('high');
+        verdict.innerHTML = t['verdict-high'] + ' <em>' + t['verdict-high-em'] + '</em>';
+        recommendation.textContent = t['reco-high'];
+    }
+
+    const list = document.getElementById('breakdown-list');
+    list.innerHTML = contributions.map(c => 
+        '<li class="' + (c.contributes ? 'contributes' : '') + '">' +
+        '<span>' + c.label + '</span>' +
+        '<span class="pts">' + (c.contributes ? '+' + c.pts : '\u2014') + '</span>' +
+        '</li>'
+    ).join('');
+}
+
+function adjust(field, delta) {
+    const input = document.getElementById(field);
+    let val = parseFloat(input.value) || 0;
+    val = Math.round((val + delta) * 10) / 10;
+    if (field === 'age') {
+        val = Math.max(18, Math.min(120, Math.round(val)));
+    } else if (field === 'hb') {
+        val = Math.max(4, Math.min(20, val));
+    }
+    input.value = val;
+    state[field] = val;
+    calculate();
+}
+
+document.getElementById('age').addEventListener('input', e => {
+    state.age = parseFloat(e.target.value) || 0;
+    calculate();
+});
+
+document.getElementById('hb').addEventListener('input', e => {
+    state.hb = parseFloat(e.target.value) || 0;
+    calculate();
+});
+
+document.querySelectorAll('.segmented').forEach(seg => {
+    const field = seg.dataset.field;
+    seg.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            seg.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const v = btn.dataset.value;
+            state[field] = (field === 'asa') ? parseInt(v) : v;
+            calculate();
+        });
+    });
+});
+
+document.querySelectorAll('.lang-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.lang-toggle button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.lang = btn.dataset.lang;
+        document.documentElement.lang = state.lang;
+        applyLanguage();
+        calculate();
+    });
+});
+
+function applyLanguage() {
+    const t = i18n[state.lang];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        if (t[key]) el.textContent = t[key];
+    });
+    const hbPoints = document.querySelector('[data-i18n="hb-points"]');
+    if (hbPoints) hbPoints.innerHTML = t['hb-points'].replace('<', '&lt;');
+}
+
+applyLanguage();
+calculate();
+</script>
+
+</body>
+</html>
